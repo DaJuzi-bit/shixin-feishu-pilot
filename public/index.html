@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#16845b">
+  <meta name="description" content="团队群消息归纳与个人待办提醒。">
+  <title>拾信 · 团队消息助手</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <a class="skip" href="#main">跳到主要内容</a>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">拾</span><div><strong>拾信</strong><span class="brand-note">团队消息助手</span></div></div>
+      <div class="top-actions"><span id="user-name"></span><button id="logout" class="text-button" hidden>退出</button><button id="refresh" class="icon-button" aria-label="刷新消息和状态" title="刷新">↻</button></div>
+    </header>
+    <section id="connection" class="connection" aria-label="连接状态">
+      <div class="connection-line"><span class="status-dot" aria-hidden="true"></span><strong id="connection-title">正在检查服务状态…</strong><span id="extractor" class="small"></span></div>
+      <details id="status-details" hidden><summary>连接说明</summary><div id="status-notes"></div></details>
+    </section>
+    <p id="feedback" class="feedback" role="status" aria-live="polite" hidden></p>
+    <button id="new-updates" class="new-updates" type="button" hidden></button>
+    <section id="login-panel" class="login-panel" hidden>
+      <span class="eyebrow">把群里的事，接到自己手里</span>
+      <h1>先连接你的团队身份</h1>
+      <p>查看已授权群聊的消息归纳。只有经过你的确认，消息才会成为个人待办。</p>
+      <a id="feishu-login" class="button primary" href="/auth/feishu/start">使用飞书登录</a>
+      <div id="local-login" hidden><p class="local-note">本地联调使用独立数据，不会读取飞书群聊或向飞书发送提醒。</p><div class="actions"><button data-demo-user="alice" class="button primary">以 Alice 本地登录</button><button data-demo-user="bob" class="button secondary">以 Bob 本地登录</button></div></div>
+    </section>
+    <div id="workspace" hidden>
+      <nav class="navigation" aria-label="主导航">
+        <button data-view="groups" aria-current="page"><span aria-hidden="true">☷</span>群消息<small id="nav-groups">0</small></button>
+        <button data-view="summaries"><span aria-hidden="true">▤</span>消息中心<small id="nav-summaries">0</small></button>
+        <button data-view="tasks"><span aria-hidden="true">✓</span>待办<small id="nav-tasks">0</small></button>
+        <button data-view="timeline"><span aria-hidden="true">◷</span>时间轴</button>
+      </nav>
+      <main id="main" tabindex="-1">
+        <div class="page-heading"><div><span class="eyebrow">TEAM INBOX</span><h1 id="page-title">群消息</h1></div><span id="updated" class="small">尚未更新</span></div>
+        <section id="view-groups" aria-label="群消息">
+          <p class="intro">在飞书里正常发消息，这里同步展示授权群的文字消息。</p>
+          <div class="group-layout"><aside><div id="group-list" class="group-list" aria-label="选择群聊"></div></aside><div class="group-content">
+            <div class="section-title"><h2 id="group-title">选择一个群聊</h2><span class="tag">只读消息</span></div>
+            <div id="messages" class="message-list"></div>
+            <details id="demo-injection" class="demo-injection" hidden><summary>本地联调：注入一条文字消息</summary><p class="small">仅进入本地消息处理流程，不会发送到飞书。</p><form id="demo-form"><label for="demo-text">测试消息正文</label><textarea id="demo-text" maxlength="10000" rows="3" required placeholder="输入要测试的群消息，可包含明确任务和未来截止时间"></textarea><button class="button secondary" type="submit">注入本地消息</button></form></details>
+          </div></div>
+        </section>
+        <section id="view-summaries" aria-label="消息中心" hidden>
+          <p class="intro">把重要的事留下。展开核对，再确认到自己的待办。</p>
+          <div class="filter-toolbar"><select id="summary-scope" aria-label="消息范围"><option value="current">当前消息</option><option value="history">历史消息</option><option value="all">全部消息</option></select><select id="action-filter" aria-label="处理状态"><option value="all">全部摘要</option><option value="actionable">可确认待办</option><option value="uncertain">需核对 / 仅供参考</option></select></div>
+          <div id="category-filters" class="chips" aria-label="按分类筛选"></div>
+          <div id="summaries" class="cards"></div>
+        </section>
+        <section id="view-tasks" aria-label="我的待办" hidden>
+          <p id="task-intro" class="intro">这里只显示你的个人待办。提醒将通过飞书私聊送达。</p>
+          <div class="task-tabs chips" aria-label="按完成状态筛选"><button data-task-filter="open" aria-pressed="true">待完成</button><button data-task-filter="overdue" aria-pressed="false">逾期</button><button data-task-filter="done" aria-pressed="false">已完成</button><button data-task-filter="all" aria-pressed="false">全部</button></div>
+          <div id="tasks" class="cards"></div>
+        </section>
+        <section id="view-timeline" aria-label="待办时间轴" hidden>
+          <div class="timeline-calendar">
+            <div class="timeline-calendar-top">
+              <label class="timeline-date-picker"><span class="small">安排好每一个截止日</span><input id="timeline-date" type="date" aria-label="选择时间轴日期" required></label>
+              <button id="timeline-today" class="button secondary" type="button">今天</button>
+            </div>
+            <div class="timeline-week-controls"><button id="timeline-prev-week" class="text-button" type="button" aria-label="上一周">‹ 上一周</button><span id="timeline-month" class="small"></span><button id="timeline-next-week" class="text-button" type="button" aria-label="下一周">下一周 ›</button></div>
+            <div id="timeline-week" class="timeline-week" aria-label="选择本周日期"></div>
+          </div>
+          <div class="timeline-sheet">
+            <div class="timeline-day-heading"><div><h2 id="timeline-day-title">今天的待办</h2><p id="timeline-count" class="small"></p></div><span class="timeline-deadline-tag">按截止时间</span></div>
+            <progress id="timeline-progress" class="timeline-progress" value="0" max="1" aria-label="当天待办完成进度"></progress>
+            <button id="timeline-overdue" class="timeline-overdue" type="button" hidden></button>
+            <div id="timeline-items" class="timeline-list"></div>
+            <details id="timeline-completed-section" class="timeline-fold" hidden><summary id="timeline-completed-label">已完成</summary><div id="timeline-completed" class="timeline-list"></div></details>
+            <details id="timeline-undated-section" class="timeline-fold" hidden><summary id="timeline-undated-label">待定日期</summary><div id="timeline-undated" class="timeline-list"></div></details>
+          </div>
+        </section>
+      </main>
+    </div>
+    <footer class="footer">消息先核对，待办由你确认。</footer>
+  </div>
+  <dialog id="task-dialog" aria-labelledby="dialog-title">
+    <form id="task-form">
+      <div class="dialog-heading"><h2 id="dialog-title">确认为我的待办</h2><button type="button" id="close-dialog" class="icon-button" aria-label="关闭">×</button></div>
+      <p id="dialog-context" class="small"></p>
+      <label for="task-title">待办标题</label><input id="task-title" name="title" maxlength="160" required>
+      <label for="task-due">截止时间</label><input id="task-due" name="dueAt" type="datetime-local" required>
+      <label for="task-reminder">提醒时间</label><input id="task-reminder" name="remindAt" type="datetime-local" required>
+      <p class="small">按本机时区填写；截止和提醒必须在未来，提醒早于截止。</p>
+      <label id="audience-row" class="checkbox-row" hidden><input id="confirm-applies" type="checkbox"><span id="audience-label"></span></label>
+      <p id="form-error" class="form-error" role="alert" hidden></p>
+      <div class="dialog-actions"><button type="button" id="cancel-dialog" class="button secondary">取消</button><button id="save-task" class="button primary" type="submit">确认并设置提醒</button></div>
+    </form>
+  </dialog>
+</body>
+</html>

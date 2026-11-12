@@ -1,0 +1,14 @@
+{
+  "name": "campus-message-assistant-feishu-pilot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.0.0" },
+  "dependencies": { "@larksuiteoapi/node-sdk": "1.75.0" },
+  "pnpm": { "ignoredBuiltDependencies": ["protobufjs"] },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/main.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "doctor": "node --env-file-if-exists=.env scripts/doctor.mjs"
+  }
+}

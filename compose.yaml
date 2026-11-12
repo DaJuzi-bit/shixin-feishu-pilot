@@ -1,0 +1,17 @@
+services:
+  assistant:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 5300
+      DATABASE_PATH: /app/data/feishu.sqlite
+    ports:
+      - "127.0.0.1:5300:5300"
+    volumes:
+      - pilot-data:/app/data
+volumes:
+  pilot-data:
